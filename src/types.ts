@@ -148,3 +148,93 @@ export  interface SubscribeOptions {
     group?: string;
 }
 
+
+/**
+ * Configuration for a transport
+ */
+export interface TransportConfig {
+    /**
+     * Unique identifier for the transport
+     */
+    id: string;
+    
+    /**
+     * Type of transport to create
+     */
+    type: string;
+    
+    /**
+     * Optional configuration options for the transport
+     */
+    options?: Record<string, any>;
+}
+
+/**
+ * Configuration for a connector
+ */
+export interface ConnectorConfig {
+    /**
+     * Unique identifier for the connector
+     */
+    id: string;
+    
+    /**
+     * Type of connector to create
+     */
+    type: 'source' | 'sink';
+    
+    /**
+     * Optional configuration options for the connector
+     */
+    options?: {
+        /**
+         * ID of the transport to use with this connector
+         */
+        transportId?: string;
+        
+        /**
+         * Channels to subscribe to or publish on
+         */
+        channels?: string[];
+        
+        /**
+         * Additional options
+         */
+        [key: string]: any;
+    };
+}
+
+/**
+ * Configuration for an EventHub
+ */
+export interface EventHubConfig {
+    /**
+     * Transports to create
+     */
+    transports?: TransportConfig[];
+    
+    /**
+     * Connectors to create
+     */
+    connectors?: ConnectorConfig[];
+}
+
+/**
+ * State of a connection
+ */
+export interface ConnectionState {
+    /**
+     * Current status of the connection
+     */
+    status: 'connected' | 'disconnected' | 'connecting' | 'error';
+    
+    /**
+     * Timestamp when the state was updated
+     */
+    timestamp: number;
+    
+    /**
+     * Error that occurred, if any
+     */
+    error?: Error;
+}

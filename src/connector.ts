@@ -11,6 +11,17 @@ import { SinkTransport,SourceTransport } from './transport';
 import { Subscription } from './types';
 
 /**
+ * Base interface for all connectors
+ * 
+ * This is used for type safety in the factory pattern
+ */
+export interface BaseConnector {
+  readonly eventHub: EventHub;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+}
+
+/**
  * Implements an inbound data flow from an external transport to the EventHub
  * 
  * @template TInput The type of raw data received from the transport
@@ -36,13 +47,13 @@ import { Subscription } from './types';
  * await connector.connect();
  * // Now websocket messages will be published to "websocket-events" channel
  */
-export abstract class SourceConnector<TInput, TOutput> {
+export abstract class SourceConnector<TInput, TOutput> implements BaseConnector {
     /** The EventHub instance where events will be published */
     readonly eventHub: EventHub;
     /** The transport that receives data from the external source */
     readonly transport: SourceTransport<TInput, TOutput>;
     /** The channel where received events will be published */
-    protected channel: string;
+    readonly channel: string;
 
     /**
      * Creates a new SourceConnector instance
@@ -120,7 +131,7 @@ export abstract class SourceConnector<TInput, TOutput> {
  * await connector.connect();
  * // Now events published to "outbound-events" will be sent to the websocket
  */
-export abstract class SinkConnector<TInput, TOutput> {
+export abstract class SinkConnector<TInput, TOutput> implements BaseConnector {
     /** The EventHub instance to subscribe to for events */
     readonly eventHub: EventHub;
     /** The transport that sends data to the external system */
