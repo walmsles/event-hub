@@ -166,7 +166,7 @@ export interface TransportConfig {
     /**
      * Optional configuration options for the transport
      */
-    options?: Record<string, any>;
+    options?: Record<string, unknown>;
 }
 
 /**
@@ -193,14 +193,19 @@ export interface ConnectorConfig {
         transportId?: string;
         
         /**
-         * Channels to subscribe to or publish on
+         * Channel to subscribe to or publish on
+         */
+        channel?: string;
+        
+        /**
+         * Multiple channels to subscribe to or publish on
          */
         channels?: string[];
         
         /**
          * Additional options
          */
-        [key: string]: any;
+        [key: string]: unknown;
     };
 }
 
@@ -217,6 +222,21 @@ export interface EventHubConfig {
      * Connectors to create
      */
     connectors?: ConnectorConfig[];
+    
+    /**
+     * Debug mode configuration
+     */
+    debug?: boolean;
+    
+    /**
+     * Default options to apply to all transports
+     */
+    defaultTransportOptions?: Record<string, unknown>;
+    
+    /**
+     * Default options to apply to all connectors
+     */
+    defaultConnectorOptions?: Record<string, unknown>;
 }
 
 /**
@@ -226,7 +246,7 @@ export interface ConnectionState {
     /**
      * Current status of the connection
      */
-    status: 'connected' | 'disconnected' | 'connecting' | 'error';
+    status: LifecycleState;
     
     /**
      * Timestamp when the state was updated
@@ -237,4 +257,125 @@ export interface ConnectionState {
      * Error that occurred, if any
      */
     error?: Error;
+    
+    /**
+     * Component ID that this state belongs to
+     */
+    componentId: string;
+    
+    /**
+     * Component type (transport or connector)
+     */
+    componentType: 'transport' | 'connector' | 'eventhub';
+}
+/**
+ * Lifecycle state for components
+ */
+export enum LifecycleState {
+    /**
+     * Component is initialized but not yet connected
+     */
+    INITIALIZED = 'initialized',
+    
+    /**
+     * Component is in the process of connecting
+     */
+    CONNECTING = 'connecting',
+    
+    /**
+     * Component is successfully connected
+     */
+    CONNECTED = 'connected',
+    
+    /**
+     * Component is in the process of disconnecting
+     */
+    DISCONNECTING = 'disconnecting',
+    
+    /**
+     * Component is disconnected
+     */
+    DISCONNECTED = 'disconnected',
+    
+    /**
+     * Component encountered an error
+     */
+    ERROR = 'error'
+}
+
+/**
+ * Configuration validation result
+ */
+export interface ValidationResult {
+    /**
+     * Whether the validation was successful
+     */
+    valid: boolean;
+    
+    /**
+     * Error message if validation failed
+     */
+    error?: string;
+    
+    /**
+     * Field that failed validation
+     */
+    field?: string;
+}
+
+/**
+ * Component initialization options
+ */
+export interface InitOptions {
+    /**
+     * Whether to auto-connect after initialization
+     */
+    autoConnect?: boolean;
+    
+    /**
+     * Timeout for connection attempts in milliseconds
+     */
+    connectionTimeout?: number;
+    
+    /**
+     * Whether to enable debug logging
+     */
+    debug?: boolean;
+}
+/**
+ * Lifecycle management interface
+ */
+export interface LifecycleManager {
+    /**
+     * Initialize the component
+     * @param options Initialization options
+     */
+    initialize(options?: InitOptions): Promise<void>;
+    
+    /**
+     * Start the component
+     */
+    start(): Promise<void>;
+    
+    /**
+     * Stop the component
+     */
+    stop(): Promise<void>;
+    
+    /**
+     * Destroy the component and clean up resources
+     */
+    destroy(): Promise<void>;
+    
+    /**
+     * Get the current state of the component
+     */
+    getState(): ConnectionState;
+    
+    /**
+     * Register a callback to be notified of state changes
+     * @param callback Function to call when state changes
+     * @returns Function to unregister the callback
+     */
+    onStateChange(callback: (state: ConnectionState) => void): () => void;
 }
