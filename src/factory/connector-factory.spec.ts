@@ -22,7 +22,7 @@ class MockSourceTransport extends SourceTransport<string, string> {
     this._connected = false;
   }
   
-  protected async handleData(data: string): Promise<void> {
+  protected async handleData(_data: string): Promise<void> {
     // Implementation not needed for tests
   }
 }
@@ -40,7 +40,7 @@ class MockSinkTransport extends SinkTransport<string, string> {
     this._connected = false;
   }
   
-  protected async sendMessage(data: string): Promise<void> {
+  protected async sendMessage(_data: string): Promise<void> {
     // Implementation not needed for tests
   }
 }
