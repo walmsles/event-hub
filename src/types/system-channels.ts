@@ -1,167 +1,211 @@
 /**
- * System channel definitions for the EventHub
+ * System channels for EventHub
  * 
  * @description
- * This file defines the standard system channels used by the EventHub for internal
- * communication, state management, and lifecycle events. These channels follow a
- * hierarchical pattern to allow for flexible subscription patterns.
+ * This file contains the system channels used by EventHub for internal communication.
  */
 
 /**
- * Component types in the system
+ * Component types
  */
 export type ComponentType = 'transport' | 'connector' | 'eventhub';
 
 /**
  * Lifecycle event types
  */
-export type LifecycleEvent = 'initialized' | 'connecting' | 'connected' | 'disconnecting' | 'disconnected' | 'error';
+export type LifecycleEventType = 'initialize' | 'start' | 'stop' | 'destroy' | 'error';
 
 /**
  * Configuration event types
  */
-export type ConfigEvent = 'updated' | 'validated' | 'error';
+export type ConfigEventType = 'set' | 'get' | 'validate' | 'apply' | 'error';
 
 /**
- * System channel namespace with strongly typed channel strings
+ * System channels
  */
 export const SYSTEM_CHANNELS = {
   /**
-   * State management channels
+   * Transport channels
    */
-  STATE: {
+  TRANSPORT: {
     /**
-     * Root channel for all state events
+     * Root channel for transport events
      */
-    ROOT: 'system:state' as const,
+    ROOT: 'system:transport',
     
     /**
-     * Transport state events
-     * Subscribe to 'system:state:transports/*' for all transport states
+     * State channel for transport events
      */
-    TRANSPORTS: 'system:state:transports' as const,
+    STATE: 'system:transport:state',
     
     /**
-     * Connector state events
-     * Subscribe to 'system:state:connectors/*' for all connector states
+     * Initialize channel for transport events
      */
-    CONNECTORS: 'system:state:connectors' as const,
+    INITIALIZE: 'system:transport:initialize',
     
     /**
-     * EventHub state events
+     * Start channel for transport events
      */
-    EVENTHUB: 'system:state:eventhub' as const
+    START: 'system:transport:start',
+    
+    /**
+     * Stop channel for transport events
+     */
+    STOP: 'system:transport:stop',
+    
+    /**
+     * Destroy channel for transport events
+     */
+    DESTROY: 'system:transport:destroy',
+    
+    /**
+     * Error channel for transport events
+     */
+    ERROR: 'system:transport:error'
   },
   
   /**
-   * Lifecycle event channels
+   * Connector channels
    */
-  LIFECYCLE: {
+  CONNECTOR: {
     /**
-     * Root channel for all lifecycle events
+     * Root channel for connector events
      */
-    ROOT: 'system:lifecycle' as const,
+    ROOT: 'system:connector',
     
     /**
-     * Initialization events
+     * State channel for connector events
      */
-    INITIALIZED: 'system:lifecycle:initialized' as const,
+    STATE: 'system:connector:state',
     
     /**
-     * Connection events
+     * Initialize channel for connector events
      */
-    CONNECTING: 'system:lifecycle:connecting' as const,
-    CONNECTED: 'system:lifecycle:connected' as const,
+    INITIALIZE: 'system:connector:initialize',
     
     /**
-     * Disconnection events
+     * Start channel for connector events
      */
-    DISCONNECTING: 'system:lifecycle:disconnecting' as const,
-    DISCONNECTED: 'system:lifecycle:disconnected' as const,
+    START: 'system:connector:start',
     
     /**
-     * Error events
+     * Stop channel for connector events
      */
-    ERROR: 'system:lifecycle:error' as const
+    STOP: 'system:connector:stop',
+    
+    /**
+     * Destroy channel for connector events
+     */
+    DESTROY: 'system:connector:destroy',
+    
+    /**
+     * Error channel for connector events
+     */
+    ERROR: 'system:connector:error'
   },
   
   /**
-   * Configuration events
+   * EventHub channels
+   */
+  EVENTHUB: {
+    /**
+     * Root channel for eventhub events
+     */
+    ROOT: 'system:eventhub',
+    
+    /**
+     * State channel for eventhub events
+     */
+    STATE: 'system:eventhub:state',
+    
+    /**
+     * Initialize channel for eventhub events
+     */
+    INITIALIZE: 'system:eventhub:initialize',
+    
+    /**
+     * Start channel for eventhub events
+     */
+    START: 'system:eventhub:start',
+    
+    /**
+     * Stop channel for eventhub events
+     */
+    STOP: 'system:eventhub:stop',
+    
+    /**
+     * Destroy channel for eventhub events
+     */
+    DESTROY: 'system:eventhub:destroy',
+    
+    /**
+     * Error channel for eventhub events
+     */
+    ERROR: 'system:eventhub:error'
+  },
+  
+  /**
+   * Config channels
    */
   CONFIG: {
     /**
-     * Root channel for all configuration events
+     * Root channel for config events
      */
-    ROOT: 'system:config' as const,
+    ROOT: 'system:config',
     
     /**
-     * Configuration update events
+     * Set channel for config events
      */
-    UPDATED: 'system:config:updated' as const,
+    SET: 'system:config:set',
     
     /**
-     * Configuration validation events
+     * Get channel for config events
      */
-    VALIDATED: 'system:config:validated' as const,
+    GET: 'system:config:get',
     
     /**
-     * Configuration error events
+     * Validate channel for config events
      */
-    ERROR: 'system:config:error' as const
-  },
-  
-  /**
-   * Error events
-   */
-  ERROR: {
-    /**
-     * Root channel for all error events
-     */
-    ROOT: 'system:error' as const,
+    VALIDATE: 'system:config:validate',
     
     /**
-     * Transport error events
+     * Apply channel for config events
      */
-    TRANSPORT: 'system:error:transport' as const,
+    APPLY: 'system:config:apply',
     
     /**
-     * Connector error events
+     * Error channel for config events
      */
-    CONNECTOR: 'system:error:connector' as const,
-    
-    /**
-     * EventHub error events
-     */
-    EVENTHUB: 'system:error:eventhub' as const
+    ERROR: 'system:config:error'
   }
 };
 
 /**
- * Helper function to create a transport-specific state channel
+ * Get the state channel for a transport
  * 
- * @param transportId The ID of the transport
- * @returns The channel name for the transport's state
+ * @param transportId Transport ID
+ * @returns State channel
  */
 export function getTransportStateChannel(transportId: string): string {
-  return `${SYSTEM_CHANNELS.STATE.TRANSPORTS}/${transportId}`;
+  return `${SYSTEM_CHANNELS.TRANSPORT.STATE}/${transportId}`;
 }
 
 /**
- * Helper function to create a connector-specific state channel
+ * Get the state channel for a connector
  * 
- * @param connectorId The ID of the connector
- * @returns The channel name for the connector's state
+ * @param connectorId Connector ID
+ * @returns State channel
  */
 export function getConnectorStateChannel(connectorId: string): string {
-  return `${SYSTEM_CHANNELS.STATE.CONNECTORS}/${connectorId}`;
+  return `${SYSTEM_CHANNELS.CONNECTOR.STATE}/${connectorId}`;
 }
 
 /**
- * Helper function to create a component-specific state channel
+ * Get the state channel for a component
  * 
- * @param componentType The type of component (transport, connector, eventhub)
- * @param componentId The ID of the component
- * @returns The channel name for the component's state
+ * @param componentType Component type
+ * @param componentId Component ID
+ * @returns State channel
  */
 export function getStateChannel(componentType: ComponentType, componentId: string): string {
   switch (componentType) {
@@ -170,89 +214,152 @@ export function getStateChannel(componentType: ComponentType, componentId: strin
     case 'connector':
       return getConnectorStateChannel(componentId);
     case 'eventhub':
-      return SYSTEM_CHANNELS.STATE.EVENTHUB;
+      return SYSTEM_CHANNELS.EVENTHUB.STATE;
     default:
-      return `${SYSTEM_CHANNELS.STATE.ROOT}/${componentType}/${componentId}`;
+      return `system:${componentType}:state/${componentId}`;
   }
 }
 
 /**
- * Helper function to create a lifecycle event channel
+ * Get the lifecycle channel for a component
  * 
- * @param event The lifecycle event (initialized, connected, disconnected, error)
- * @param componentType The type of component (optional)
- * @param componentId The ID of the component (optional)
- * @returns The channel name for the lifecycle event
+ * @param event Lifecycle event type
+ * @param componentType Component type
+ * @param componentId Optional component ID
+ * @returns Lifecycle channel
  */
 export function getLifecycleChannel(
-  event: LifecycleEvent,
-  componentType?: ComponentType,
+  event: LifecycleEventType,
+  componentType: ComponentType,
   componentId?: string
 ): string {
   let channel: string;
   
-  switch (event) {
-    case 'initialized':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.INITIALIZED;
+  // Get the base channel based on component type and event
+  switch (componentType) {
+    case 'transport':
+      switch (event) {
+        case 'initialize':
+          channel = SYSTEM_CHANNELS.TRANSPORT.INITIALIZE;
+          break;
+        case 'start':
+          channel = SYSTEM_CHANNELS.TRANSPORT.START;
+          break;
+        case 'stop':
+          channel = SYSTEM_CHANNELS.TRANSPORT.STOP;
+          break;
+        case 'destroy':
+          channel = SYSTEM_CHANNELS.TRANSPORT.DESTROY;
+          break;
+        case 'error':
+          channel = SYSTEM_CHANNELS.TRANSPORT.ERROR;
+          break;
+        default:
+          channel = SYSTEM_CHANNELS.TRANSPORT.ROOT;
+          break;
+      }
       break;
-    case 'connecting':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.CONNECTING;
+    case 'connector':
+      switch (event) {
+        case 'initialize':
+          channel = SYSTEM_CHANNELS.CONNECTOR.INITIALIZE;
+          break;
+        case 'start':
+          channel = SYSTEM_CHANNELS.CONNECTOR.START;
+          break;
+        case 'stop':
+          channel = SYSTEM_CHANNELS.CONNECTOR.STOP;
+          break;
+        case 'destroy':
+          channel = SYSTEM_CHANNELS.CONNECTOR.DESTROY;
+          break;
+        case 'error':
+          channel = SYSTEM_CHANNELS.CONNECTOR.ERROR;
+          break;
+        default:
+          channel = SYSTEM_CHANNELS.CONNECTOR.ROOT;
+          break;
+      }
       break;
-    case 'connected':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.CONNECTED;
-      break;
-    case 'disconnecting':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.DISCONNECTING;
-      break;
-    case 'disconnected':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.DISCONNECTED;
-      break;
-    case 'error':
-      channel = SYSTEM_CHANNELS.LIFECYCLE.ERROR;
+    case 'eventhub':
+      switch (event) {
+        case 'initialize':
+          channel = SYSTEM_CHANNELS.EVENTHUB.INITIALIZE;
+          break;
+        case 'start':
+          channel = SYSTEM_CHANNELS.EVENTHUB.START;
+          break;
+        case 'stop':
+          channel = SYSTEM_CHANNELS.EVENTHUB.STOP;
+          break;
+        case 'destroy':
+          channel = SYSTEM_CHANNELS.EVENTHUB.DESTROY;
+          break;
+        case 'error':
+          channel = SYSTEM_CHANNELS.EVENTHUB.ERROR;
+          break;
+        default:
+          channel = SYSTEM_CHANNELS.EVENTHUB.ROOT;
+          break;
+      }
       break;
     default:
-      channel = SYSTEM_CHANNELS.LIFECYCLE.ROOT;
+      // For unknown component types, use a generic channel format
+      channel = `system:${componentType}:${event}`;
+      break;
   }
   
-  if (componentType) {
-    channel = `${channel}:${componentType}`;
-    
-    if (componentId) {
-      channel = `${channel}/${componentId}`;
-    }
+  // Append component ID if provided
+  if (componentId) {
+    channel = `${channel}/${componentId}`;
   }
   
   return channel;
 }
 
 /**
- * Helper function to create an error event channel
+ * Get the config channel for a component
  * 
- * @param componentType The type of component (optional)
- * @param componentId The ID of the component (optional)
- * @returns The channel name for the error event
+ * @param event Config event type
+ * @param componentType Optional component type
+ * @param componentId Optional component ID
+ * @returns Config channel
  */
-export function getErrorChannel(
+export function getConfigChannel(
+  event: ConfigEventType,
   componentType?: ComponentType,
   componentId?: string
 ): string {
-  let channel: string = SYSTEM_CHANNELS.ERROR.ROOT;
+  let channel: string;
   
+  // Get the base channel based on event type
+  switch (event) {
+    case 'set':
+      channel = SYSTEM_CHANNELS.CONFIG.SET;
+      break;
+    case 'get':
+      channel = SYSTEM_CHANNELS.CONFIG.GET;
+      break;
+    case 'validate':
+      channel = SYSTEM_CHANNELS.CONFIG.VALIDATE;
+      break;
+    case 'apply':
+      channel = SYSTEM_CHANNELS.CONFIG.APPLY;
+      break;
+    case 'error':
+      channel = SYSTEM_CHANNELS.CONFIG.ERROR;
+      break;
+    default:
+      channel = SYSTEM_CHANNELS.CONFIG.ROOT;
+      break;
+  }
+  
+  // Append component type and ID if provided
   if (componentType) {
-    switch (componentType) {
-      case 'transport':
-        channel = SYSTEM_CHANNELS.ERROR.TRANSPORT;
-        break;
-      case 'connector':
-        channel = SYSTEM_CHANNELS.ERROR.CONNECTOR;
-        break;
-      case 'eventhub':
-        channel = SYSTEM_CHANNELS.ERROR.EVENTHUB;
-        break;
-    }
+    channel = `${channel}:${componentType}`;
     
     if (componentId) {
-      channel = `${channel}/${componentId}`;
+      channel = `${channel}:${componentId}`;
     }
   }
   

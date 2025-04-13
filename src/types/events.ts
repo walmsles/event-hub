@@ -7,7 +7,7 @@
  */
 import { ValidationResult } from './config';
 import { ConnectionState } from './lifecycle';
-import { ComponentType, ConfigEvent as ConfigEventType,LifecycleEvent as LifecycleEventType } from './system-channels';
+import { ComponentType, ConfigEventType,LifecycleEventType } from './system-channels';
 
 /**
  * Base interface for all system events

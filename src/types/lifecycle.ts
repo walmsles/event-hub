@@ -12,6 +12,11 @@ import { ComponentType } from './system-channels';
  */
 export enum LifecycleState {
   /**
+   * Component is in the process of initializing
+   */
+  INITIALIZING = 'initializing',
+  
+  /**
    * Component is initialized but not yet connected
    */
   INITIALIZED = 'initialized',
@@ -120,4 +125,29 @@ export interface InitOptions {
      */
     exponential: boolean;
   };
+  
+  /**
+   * Additional component-specific options
+   */
+  [key: string]: unknown;
+}
+
+/**
+ * EventHub configuration
+ */
+export interface EventHubConfig {
+  /**
+   * Whether to enable debug logging
+   */
+  debug?: boolean;
+  
+  /**
+   * Whether to auto-connect components after initialization
+   */
+  autoConnect?: boolean;
+  
+  /**
+   * Additional configuration options
+   */
+  [key: string]: unknown;
 }
