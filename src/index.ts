@@ -1,17 +1,20 @@
 import { Channel } from './channel';
 import { EventHub } from './event-hub';
-import { IPipelineFilter,Pipeline, PipelineResult } from './pipeline';
-import { BaseTransport, ITransport, SinkTransport,SourceTransport } from './transport';
+import { IPipelineFilter, Pipeline, PipelineResult } from './pipeline';
+import { BaseTransport, ITransport, SinkTransport, SourceTransport } from './transport';
 import { EventCallback, Subscription } from './types';
+import { BaseFactory, FactoryRegistry } from './factory/base-factory';
 
 /**
  * Core components for event handling and communication
  */
 export { 
+    BaseFactory,
     BaseTransport,
     Channel,
     EventCallback,
     EventHub,
+    FactoryRegistry,
     IPipelineFilter,
     ITransport,
     Pipeline,
