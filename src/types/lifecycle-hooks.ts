@@ -1,58 +1,150 @@
 /**
- * Lifecycle hooks interface for component lifecycle management
+ * Interface for lifecycle hooks
  */
 import { InitOptions } from './lifecycle';
 
 /**
- * Interface for lifecycle hooks with strong typing
+ * Interface for lifecycle hooks
  */
 export interface ILifecycleHooks {
   /**
-   * Called when a component is being initialized
-   * 
+   * Called before initialization
+   */
+  beforeInitialize?(): Promise<void>;
+  
+  /**
+   * Called after initialization
+   */
+  afterInitialize?(): Promise<void>;
+  
+  /**
+   * Called before connecting
+   */
+  beforeConnect?(): Promise<void>;
+  
+  /**
+   * Called after connecting
+   */
+  afterConnect?(): Promise<void>;
+  
+  /**
+   * Called before disconnecting
+   */
+  beforeDisconnect?(): Promise<void>;
+  
+  /**
+   * Called after disconnecting
+   */
+  afterDisconnect?(): Promise<void>;
+  
+  /**
+   * Called before destroying
+   */
+  beforeDestroy?(): Promise<void>;
+  
+  /**
+   * Called after destroying
+   */
+  afterDestroy?(): Promise<void>;
+  
+  /**
+   * Called during initialization
    * @param options Initialization options
-   * @returns Promise that resolves to true if initialization was successful, false otherwise
+   * @returns Whether initialization was successful
    */
-  onInitialize(options?: InitOptions): Promise<boolean>;
+  onInitialize?(options?: InitOptions): Promise<boolean>;
   
   /**
-   * Called when a component is being started
-   * 
-   * @returns Promise that resolves to true if start was successful, false otherwise
+   * Called during start
+   * @returns Whether start was successful
    */
-  onStart(): Promise<boolean>;
+  onStart?(): Promise<boolean>;
   
   /**
-   * Called when a component is being stopped
-   * 
-   * @returns Promise that resolves to true if stop was successful, false otherwise
+   * Called during stop
+   * @returns Whether stop was successful
    */
-  onStop(): Promise<boolean>;
+  onStop?(): Promise<boolean>;
   
   /**
-   * Called when a component is being destroyed
-   * 
-   * @returns Promise that resolves to true if destroy was successful, false otherwise
+   * Called during destroy
+   * @returns Whether destroy was successful
    */
-  onDestroy(): Promise<boolean>;
+  onDestroy?(): Promise<boolean>;
 }
 
 /**
- * Default implementation of lifecycle hooks that always returns true
+ * Default implementation of lifecycle hooks
  */
 export class DefaultLifecycleHooks implements ILifecycleHooks {
+  /**
+   * Called before initialization
+   */
+  async beforeInitialize(): Promise<void> {}
+  
+  /**
+   * Called after initialization
+   */
+  async afterInitialize(): Promise<void> {}
+  
+  /**
+   * Called before connecting
+   */
+  async beforeConnect(): Promise<void> {}
+  
+  /**
+   * Called after connecting
+   */
+  async afterConnect(): Promise<void> {}
+  
+  /**
+   * Called before disconnecting
+   */
+  async beforeDisconnect(): Promise<void> {}
+  
+  /**
+   * Called after disconnecting
+   */
+  async afterDisconnect(): Promise<void> {}
+  
+  /**
+   * Called before destroying
+   */
+  async beforeDestroy(): Promise<void> {}
+  
+  /**
+   * Called after destroying
+   */
+  async afterDestroy(): Promise<void> {}
+  
+  /**
+   * Called during initialization
+   * @returns Whether initialization was successful
+   */
   async onInitialize(_options?: InitOptions): Promise<boolean> {
     return true;
   }
   
+  /**
+   * Called during start
+   * @returns Whether start was successful
+   */
   async onStart(): Promise<boolean> {
     return true;
   }
   
+  /**
+   * Called during stop
+   * @returns Whether stop was successful
+   */
   async onStop(): Promise<boolean> {
     return true;
   }
   
+  /**
+   * Called during destroy
+   * @returns Whether destroy was successful
+   */
   async onDestroy(): Promise<boolean> {
     return true;
   }

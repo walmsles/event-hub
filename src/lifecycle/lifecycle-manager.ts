@@ -8,7 +8,7 @@
 import { EventHub } from '../event-hub';
 import { ConnectionState, InitOptions, LifecycleState } from '../types/lifecycle';
 import { ILifecycleHooks } from '../types/lifecycle-hooks';
-import { ComponentType, getLifecycleChannel, getStateChannel } from '../types/system-channels';
+import { ComponentType, getLifecycleChannel, getStateChannel, LifecycleEventType } from '../types/system-channels';
 
 /**
  * Lifecycle manager for EventHub components
@@ -112,9 +112,9 @@ export class LifecycleManager {
    */
   public async initialize(options?: InitOptions): Promise<void> {
     // Call the onInitialize hook
-    const success = await this._lifecycleHooks.onInitialize(options);
+    const success = await this._lifecycleHooks.onInitialize?.(options);
     
-    if (!success) {
+    if (success === false) {
       this.updateState(LifecycleState.ERROR, new Error('Initialization failed'));
       throw new Error(`Failed to initialize ${this._componentType} ${this._componentId}`);
     }
@@ -124,7 +124,7 @@ export class LifecycleManager {
     
     // Publish lifecycle event
     try {
-      const channel = getLifecycleChannel('initialize', this._componentType, this._componentId);
+      const channel = getLifecycleChannel(LifecycleEventType.INITIALIZE, this._componentType, this._componentId);
       await this._eventHub.publish(channel, { componentId: this._componentId });
     } catch (error) {
       console.error(`Error publishing lifecycle event: ${error}`);
@@ -141,9 +141,9 @@ export class LifecycleManager {
    */
   public async start(): Promise<void> {
     // Call the onStart hook
-    const success = await this._lifecycleHooks.onStart();
+    const success = await this._lifecycleHooks.onStart?.();
     
-    if (!success) {
+    if (success === false) {
       this.updateState(LifecycleState.ERROR, new Error('Start failed'));
       throw new Error(`Failed to start ${this._componentType} ${this._componentId}`);
     }
@@ -153,7 +153,7 @@ export class LifecycleManager {
     
     // Publish lifecycle event
     try {
-      const channel = getLifecycleChannel('start', this._componentType, this._componentId);
+      const channel = getLifecycleChannel(LifecycleEventType.START, this._componentType, this._componentId);
       await this._eventHub.publish(channel, { componentId: this._componentId });
     } catch (error) {
       console.error(`Error publishing lifecycle event: ${error}`);
@@ -165,9 +165,9 @@ export class LifecycleManager {
    */
   public async stop(): Promise<void> {
     // Call the onStop hook
-    const success = await this._lifecycleHooks.onStop();
+    const success = await this._lifecycleHooks.onStop?.();
     
-    if (!success) {
+    if (success === false) {
       this.updateState(LifecycleState.ERROR, new Error('Stop failed'));
       throw new Error(`Failed to stop ${this._componentType} ${this._componentId}`);
     }
@@ -177,7 +177,7 @@ export class LifecycleManager {
     
     // Publish lifecycle event
     try {
-      const channel = getLifecycleChannel('stop', this._componentType, this._componentId);
+      const channel = getLifecycleChannel(LifecycleEventType.STOP, this._componentType, this._componentId);
       await this._eventHub.publish(channel, { componentId: this._componentId });
     } catch (error) {
       console.error(`Error publishing lifecycle event: ${error}`);
@@ -194,9 +194,9 @@ export class LifecycleManager {
     }
     
     // Call the onDestroy hook
-    const success = await this._lifecycleHooks.onDestroy();
+    const success = await this._lifecycleHooks.onDestroy?.();
     
-    if (!success) {
+    if (success === false) {
       this.updateState(LifecycleState.ERROR, new Error('Destroy failed'));
       throw new Error(`Failed to destroy ${this._componentType} ${this._componentId}`);
     }
@@ -206,7 +206,7 @@ export class LifecycleManager {
     
     // Publish lifecycle event
     try {
-      const channel = getLifecycleChannel('destroy', this._componentType, this._componentId);
+      const channel = getLifecycleChannel(LifecycleEventType.DESTROY, this._componentType, this._componentId);
       await this._eventHub.publish(channel, { componentId: this._componentId });
     } catch (error) {
       console.error(`Error publishing lifecycle event: ${error}`);

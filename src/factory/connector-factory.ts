@@ -1,3 +1,6 @@
+/**
+ * Connector factory implementation
+ */
 import { BaseConnector } from '../connector';
 import { EventHub } from '../event-hub';
 import { ConnectorConfig } from '../types';
@@ -5,14 +8,18 @@ import { ConnectorConfig } from '../types';
 import { BaseFactory } from './base-factory';
 
 /**
- * Factory for creating connector instances based on configuration
+ * Factory for creating connector instances
  */
 export class ConnectorFactory extends BaseFactory<BaseConnector> {
+  /**
+   * EventHub instance
+   */
   private eventHub: EventHub;
   
   /**
-   * Creates a new ConnectorFactory
-   * @param eventHub The EventHub instance to use for creating connectors
+   * Create a connector factory
+   * 
+   * @param eventHub EventHub instance
    */
   constructor(eventHub: EventHub) {
     super();
@@ -20,69 +27,82 @@ export class ConnectorFactory extends BaseFactory<BaseConnector> {
   }
   
   /**
-   * Creates a connector instance from a configuration object
-   * @param config The connector configuration
-   * @returns A new connector instance
-   * @throws Error if the connector type is not registered
+   * Create a connector instance with validation
+   * 
+   * @param config Connector configuration
+   * @returns Connector instance
    */
-  public createFromConfig(config: ConnectorConfig): BaseConnector {
-    const { type, options: configOptions = {} } = config;
+  override createWithValidation(config: ConnectorConfig): BaseConnector {
+    // Validate required fields
+    this.validateConfig(config);
     
-    // Ensure the id and eventHub are passed to the connector constructor
-    const connectorOptions = {
-      ...configOptions,
-      id: config.id,
+    // Add the EventHub to the options
+    const options = {
+      ...config,
       eventHub: this.eventHub
     };
     
-    return super.create(type, connectorOptions);
+    // Create the connector
+    return this.create(config.type, options);
   }
   
   /**
-   * Creates a new connector instance after validating the configuration
-   * @param config The connector configuration
-   * @returns A new connector instance
-   * @throws TypeError if the configuration is invalid
-   * @throws Error if the connector type is not registered
+   * Validate a connector configuration
+   * 
+   * @param config Connector configuration
+   * @returns True if valid
+   * @throws Error if invalid
    */
-  public createWithValidation(config: ConnectorConfig): BaseConnector {
-    this.validateConfig(config);
-    return this.createFromConfig(config);
-  }
-  
-  /**
-   * Validates a connector configuration
-   * @param config The connector configuration to validate
-   * @returns true if the configuration is valid
-   * @throws TypeError if the configuration is invalid
-   */
-  public validateConfig(config: ConnectorConfig): boolean {
+  override validateConfig(config: any): boolean {
     if (!config) {
       throw new TypeError('Connector configuration is required');
     }
     
-    // Check for empty id first, then check if it exists
-    if (config.id === '') {
-      throw new TypeError('Connector id cannot be empty');
-    } else if (!config.id) {
+    if (!config.id) {
       throw new TypeError('Connector configuration must include an id');
     }
     
-    // Check for type existence
+    if (typeof config.id !== 'string' || config.id.trim() === '') {
+      throw new TypeError('Connector id cannot be empty');
+    }
+    
     if (!config.type) {
       throw new TypeError('Connector configuration must include a type');
     }
     
-    // Validate that the type is one of the allowed values
-    if (config.type !== 'source' && config.type !== 'sink') {
+    if (typeof config.type !== 'string' || config.type.trim() === '') {
+      throw new TypeError('Connector type cannot be empty');
+    }
+    
+    if (config.type !== 'source' && config.type !== 'sink' && config.type !== 'both') {
       throw new TypeError("Connector type must be 'source' or 'sink'");
     }
     
-    // If channel is provided, validate it's not empty
-    if (config.options?.channel === '') {
-      throw new TypeError('Connector channel cannot be empty when provided');
+    // Check channel if provided
+    if (config.options && config.options.channel !== undefined) {
+      if (typeof config.options.channel !== 'string' || config.options.channel.trim() === '') {
+        throw new TypeError('Connector channel cannot be empty when provided');
+      }
     }
     
     return true;
+  }
+  
+  /**
+   * Create from a configuration object
+   * 
+   * @param config Configuration object
+   * @returns Created connector instance
+   */
+  createFromConfig(config: ConnectorConfig): BaseConnector {
+    this.validateConfig(config);
+    
+    // Add the EventHub to the options
+    const options = {
+      ...config,
+      eventHub: this.eventHub
+    };
+    
+    return this.create(config.type, options);
   }
 }

@@ -1,9 +1,9 @@
+/**
+ * Re-export all types from the types directory
+ */
+export * from './channel';
 export * from './config';
-export * from './events';
-export { 
-  ConnectionState,
-  InitOptions,
-  LifecycleState
-} from './lifecycle';
+export * from './constants';
+export * from './lifecycle';
 export * from './lifecycle-hooks';
 export * from './system-channels';

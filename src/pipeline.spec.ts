@@ -1,4 +1,4 @@
-import { IPipelineFilter, Pipeline, PipelineResult } from './index';
+import { IPipelineFilter, Pipeline, PipelineResult } from './pipeline';
 
 // Create proper filter classes for testing
 class StringToNumberFilter implements IPipelineFilter<string, number> {

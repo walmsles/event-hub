@@ -1,148 +1,263 @@
 /**
  * EventHub lifecycle management
- * 
- * @description
- * This file contains the EventHubLifecycle class that manages the lifecycle
- * of the EventHub and its components.
  */
 import { EventHub } from '../event-hub';
-import { EventHubConfig, InitOptions, LifecycleState } from '../types/lifecycle';
-import { ILifecycleHooks } from '../types/lifecycle-hooks';
-
-import { LifecycleManager } from './lifecycle-manager';
-
-/**
- * EventHub lifecycle hooks implementation
- */
-export class EventHubLifecycleHooks implements ILifecycleHooks {
-  constructor(
-    private _eventHub: EventHub,
-    private _config?: EventHubConfig
-  ) {}
-  
-  async onInitialize(options?: InitOptions): Promise<boolean> {
-    try {
-      // Apply configuration if provided
-      if (this._config) {
-        // Apply debug mode if specified
-        if (this._config.debug) {
-          console.debug('EventHub debug mode enabled');
-        }
-      }
-      
-      // Apply options
-      if (options) {
-        // Override debug mode if specified in options
-        if (options.debug !== undefined) {
-          console.debug(`EventHub debug mode ${options.debug ? 'enabled' : 'disabled'} from options`);
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error initializing EventHub:', error);
-      return false;
-    }
-  }
-  
-  async onStart(): Promise<boolean> {
-    try {
-      // Start all components if configured to do so
-      if (this._config?.autoConnect) {
-        console.debug('EventHub auto-connect enabled, starting all components');
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error starting EventHub:', error);
-      return false;
-    }
-  }
-  
-  async onStop(): Promise<boolean> {
-    try {
-      // Stop all components
-      console.debug('Stopping all EventHub components');
-      
-      return true;
-    } catch (error) {
-      console.error('Error stopping EventHub:', error);
-      return false;
-    }
-  }
-  
-  async onDestroy(): Promise<boolean> {
-    try {
-      // Destroy all components
-      console.debug('Destroying all EventHub components');
-      
-      // Clear all subscriptions
-      console.debug('Clearing all EventHub subscriptions');
-      
-      return true;
-    } catch (error) {
-      console.error('Error destroying EventHub:', error);
-      return false;
-    }
-  }
-}
+import { ConnectionState, EventHubConfig, LifecycleManager, LifecycleState } from '../types';
+import { DefaultLifecycleHooks, ILifecycleHooks } from '../types/lifecycle-hooks';
+import { getStateChannel } from '../types/system-channels';
 
 /**
  * EventHub lifecycle manager
  */
-export class EventHubLifecycle extends LifecycleManager {
+export class EventHubLifecycle implements LifecycleManager {
   /**
-   * Configuration for the EventHub
+   * EventHub instance
    */
-  private _config?: EventHubConfig;
+  private eventHub: EventHub;
   
   /**
-   * Constructor
+   * Current state
+   */
+  private state: ConnectionState;
+  
+  /**
+   * Configuration
+   */
+  private config?: EventHubConfig;
+  
+  /**
+   * Lifecycle hooks
+   */
+  private hooks: ILifecycleHooks;
+  
+  /**
+   * State change callbacks
+   */
+  private stateChangeCallbacks: Set<(state: ConnectionState) => void> = new Set();
+  
+  /**
+   * Create an EventHub lifecycle manager
    * 
    * @param eventHub EventHub instance
-   * @param config Optional EventHub configuration
-   * @param lifecycleHooks Optional lifecycle hooks implementation
+   * @param config Optional configuration
+   * @param hooks Optional lifecycle hooks
    */
-  constructor(
-    eventHub: EventHub, 
-    config?: EventHubConfig,
-    lifecycleHooks?: ILifecycleHooks
-  ) {
-    // Create lifecycle hooks if not provided
-    const hooks = lifecycleHooks || new EventHubLifecycleHooks(eventHub, config);
+  constructor(eventHub: EventHub, config?: EventHubConfig, hooks?: ILifecycleHooks) {
+    this.eventHub = eventHub;
+    this.config = config;
+    this.hooks = hooks || new DefaultLifecycleHooks();
     
-    // Initialize the lifecycle manager with the hooks
-    super('eventhub', 'eventhub', eventHub, hooks);
-    
-    this._config = config;
+    this.state = {
+      status: LifecycleState.CREATED,
+      timestamp: Date.now(),
+      componentType: 'eventhub'
+    };
   }
   
   /**
-   * Configure the EventHub
+   * Update the configuration
    * 
-   * @param config EventHub configuration
+   * @param config New configuration
    */
-  public async configure(config: EventHubConfig): Promise<void> {
-    this._config = config;
-    
-    // If already initialized, apply configuration
-    if (this._state.status !== LifecycleState.DISCONNECTED) {
-      // Apply debug mode if specified
-      if (config.debug) {
-        console.debug('EventHub debug mode enabled from configure');
+  async configure(config: EventHubConfig): Promise<void> {
+    this.config = config;
+  }
+  
+  /**
+   * Initialize the EventHub
+   */
+  async initialize(): Promise<void> {
+    try {
+      // Call before initialize hook if provided
+      if (this.hooks?.beforeInitialize) {
+        await this.hooks.beforeInitialize();
       }
       
-      // Apply auto-connect if specified
-      if (config.autoConnect && this._state.status === LifecycleState.INITIALIZED) {
+      // Update state
+      this.updateState(LifecycleState.INITIALIZING);
+      
+      // Initialization logic here
+      
+      // Update state
+      this.updateState(LifecycleState.INITIALIZED);
+      
+      // Call after initialize hook if provided
+      if (this.hooks?.afterInitialize) {
+        await this.hooks.afterInitialize();
+      }
+      
+      // Auto-connect if configured
+      if (this.config?.autoConnect) {
         await this.start();
       }
+    } catch (error) {
+      this.updateState(LifecycleState.ERROR, error as Error);
+      throw error;
     }
   }
   
   /**
-   * Get the current configuration
+   * Start the EventHub (connect all components)
    */
-  public getConfig(): EventHubConfig | undefined {
-    return this._config ? { ...this._config } : undefined;
+  async start(): Promise<void> {
+    try {
+      // Call before connect hook if provided
+      if (this.hooks?.beforeConnect) {
+        await this.hooks.beforeConnect();
+      }
+      
+      // Update state
+      this.updateState(LifecycleState.CONNECTING);
+      
+      // Connect all transports
+      const transports = this.eventHub.getAllTransports();
+      for (const [, transport] of transports.entries()) {
+        await transport.connect();
+      }
+      
+      // Connect all connectors
+      const connectors = this.eventHub.getAllConnectors();
+      for (const [, connector] of connectors.entries()) {
+        await connector.connect();
+      }
+      
+      // Update state
+      this.updateState(LifecycleState.CONNECTED);
+      
+      // Call after connect hook if provided
+      if (this.hooks?.afterConnect) {
+        await this.hooks.afterConnect();
+      }
+    } catch (error) {
+      this.updateState(LifecycleState.ERROR, error as Error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Stop the EventHub (disconnect all components)
+   */
+  async stop(): Promise<void> {
+    try {
+      // Call before disconnect hook if provided
+      if (this.hooks?.beforeDisconnect) {
+        await this.hooks.beforeDisconnect();
+      }
+      
+      // Update state
+      this.updateState(LifecycleState.DISCONNECTING);
+      
+      // Disconnect all connectors first
+      const connectors = this.eventHub.getAllConnectors();
+      for (const [, connector] of connectors.entries()) {
+        await connector.disconnect();
+      }
+      
+      // Then disconnect all transports
+      const transports = this.eventHub.getAllTransports();
+      for (const [, transport] of transports.entries()) {
+        await transport.disconnect();
+      }
+      
+      // Update state
+      this.updateState(LifecycleState.DISCONNECTED);
+      
+      // Call after disconnect hook if provided
+      if (this.hooks?.afterDisconnect) {
+        await this.hooks.afterDisconnect();
+      }
+    } catch (error) {
+      this.updateState(LifecycleState.ERROR, error as Error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Destroy the EventHub (disconnect and clean up all components)
+   */
+  async destroy(): Promise<void> {
+    try {
+      // Call before destroy hook if provided
+      if (this.hooks?.beforeDestroy) {
+        await this.hooks.beforeDestroy();
+      }
+      
+      // Disconnect first if connected
+      if (this.state.status === LifecycleState.CONNECTED) {
+        await this.stop();
+      }
+      
+      // Update state
+      this.updateState(LifecycleState.DESTROYED);
+      
+      // Call after destroy hook if provided
+      if (this.hooks?.afterDestroy) {
+        await this.hooks.afterDestroy();
+      }
+    } catch (error) {
+      this.updateState(LifecycleState.ERROR, error as Error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Get the current state
+   * 
+   * @returns Current state
+   */
+  getState(): ConnectionState {
+    return { ...this.state };
+  }
+  
+  /**
+   * Register a callback for state changes
+   * 
+   * @param callback Function to call when state changes
+   * @returns Function to unregister the callback
+   */
+  onStateChange(callback: (state: ConnectionState) => void): () => void {
+    this.stateChangeCallbacks.add(callback);
+    
+    // Return unsubscribe function
+    return () => {
+      this.stateChangeCallbacks.delete(callback);
+    };
+  }
+  
+  /**
+   * Update the state and notify callbacks
+   * 
+   * @param status New status
+   * @param error Optional error
+   */
+  private updateState(status: LifecycleState, error?: Error): void {
+    this.state = {
+      status,
+      timestamp: Date.now(),
+      componentType: 'eventhub',
+      error
+    };
+    
+    // Notify all callbacks
+    for (const callback of Array.from(this.stateChangeCallbacks)) {
+      try {
+        callback({ ...this.state });
+      } catch (callbackError) {
+        console.error('Error in state change callback:', callbackError);
+      }
+    }
+    
+    // Publish state change event
+    this.eventHub.publish(getStateChannel('eventhub'), { ...this.state })
+      .catch(err => console.error('Error publishing state change:', err));
+  }
+  
+  /**
+   * Get the current configuration
+   * 
+   * @returns Current configuration
+   */
+  getConfig(): EventHubConfig | undefined {
+    return this.config ? { ...this.config } : undefined;
   }
 }

@@ -1,96 +1,161 @@
 /**
- * Interface for factory registry that manages registration and creation of components
+ * Base factory implementation for component creation
+ */
+
+/**
+ * Factory registry interface
  */
 export interface FactoryRegistry<T> {
   /**
-   * Register a new implementation for a specific type
-   * @param type The type identifier
-   * @param implementation The constructor for the implementation
+   * Register a type implementation
+   * 
+   * @param type Type identifier
+   * @param implementation Constructor for the type
    */
   register(type: string, implementation: new (...args: any[]) => T): void;
   
   /**
    * Create an instance of a registered type
-   * @param type The type identifier
-   * @param options Options to pass to the constructor
-   * @returns A new instance of the requested type
+   * 
+   * @param type Type identifier
+   * @param options Options for the constructor
+   * @returns Instance of the type
    */
   create(type: string, options: any): T;
   
   /**
-   * Remove a type registration
-   * @param type The type identifier to unregister
+   * Unregister a type
+   * 
+   * @param type Type identifier
    */
   unregister(type: string): void;
   
   /**
    * Check if a type is registered
-   * @param type The type identifier to check
-   * @returns True if the type is registered, false otherwise
+   * 
+   * @param type Type identifier
+   * @returns Whether the type is registered
    */
   hasType(type: string): boolean;
 }
 
 /**
- * Base implementation of a factory registry that can register and create instances of a specific type
+ * Base factory implementation
  */
 export class BaseFactory<T> implements FactoryRegistry<T> {
   /**
    * Registry of type implementations
-   * @private
    */
   private registry = new Map<string, new (...args: any[]) => T>();
-
+  
   /**
-   * Register a new implementation for a specific type
-   * @param type The type identifier
-   * @param implementation The constructor for the implementation
-   * @throws Error if the type is already registered
+   * Register a type implementation
+   * 
+   * @param type Type identifier
+   * @param implementation Constructor for the type
    */
-  public register(type: string, implementation: new (...args: any[]) => T): void {
+  register(type: string, implementation: new (...args: any[]) => T): void {
     if (this.registry.has(type)) {
       throw new Error(`Type '${type}' is already registered`);
     }
+    
     this.registry.set(type, implementation);
   }
-
+  
   /**
    * Create an instance of a registered type
-   * @param type The type identifier
-   * @param options Options to pass to the constructor
-   * @returns A new instance of the requested type
-   * @throws Error if the type is not registered
+   * 
+   * @param type Type identifier
+   * @param options Options for the constructor
+   * @returns Instance of the type
    */
-  public create(type: string, options: any): T {
+  create(type: string, options: any): T {
     const Implementation = this.registry.get(type);
+    
     if (!Implementation) {
       throw new Error(`No implementation registered for type: ${type}`);
     }
+    
     return new Implementation(options);
   }
-
+  
   /**
-   * Remove a type registration
-   * @param type The type identifier to unregister
+   * Create an instance of a registered type with validation
+   * 
+   * @param config Configuration object with type and options
+   * @returns Instance of the type
    */
-  public unregister(type: string): void {
+  createWithValidation(config: { type: string; [key: string]: any }): T {
+    return this.create(config.type, config);
+  }
+  
+  /**
+   * Unregister a type
+   * 
+   * @param type Type identifier
+   */
+  unregister(type: string): void {
     this.registry.delete(type);
   }
-
+  
   /**
    * Check if a type is registered
-   * @param type The type identifier to check
-   * @returns True if the type is registered, false otherwise
+   * 
+   * @param type Type identifier
+   * @returns Whether the type is registered
    */
-  public hasType(type: string): boolean {
+  hasType(type: string): boolean {
     return this.registry.has(type);
   }
-
+  
   /**
    * Get all registered types
-   * @returns Array of registered type identifiers
+   * 
+   * @returns Array of registered type names
    */
-  public getRegisteredTypes(): string[] {
+  getRegisteredTypes(): string[] {
     return Array.from(this.registry.keys());
+  }
+  
+  /**
+   * Validate a configuration object
+   * 
+   * @param config Configuration object
+   * @returns True if valid
+   * @throws Error if invalid
+   */
+  validateConfig(config: any): boolean {
+    if (!config) {
+      throw new TypeError('Configuration is required');
+    }
+    
+    if (!config.id) {
+      throw new TypeError('Configuration must include an id');
+    }
+    
+    if (typeof config.id !== 'string' || config.id.trim() === '') {
+      throw new TypeError('Id cannot be empty');
+    }
+    
+    if (!config.type) {
+      throw new TypeError('Configuration must include a type');
+    }
+    
+    if (typeof config.type !== 'string' || config.type.trim() === '') {
+      throw new TypeError('Type cannot be empty');
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Create from a configuration object
+   * 
+   * @param config Configuration object
+   * @returns Created instance
+   */
+  createFromConfig(config: any): T {
+    this.validateConfig(config);
+    return this.create(config.type, config);
   }
 }

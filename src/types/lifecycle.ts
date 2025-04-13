@@ -1,89 +1,50 @@
 /**
- * Lifecycle management types for the EventHub system
- * 
- * @description
- * This file contains all the lifecycle-related interfaces and enums used throughout the EventHub system.
- * These types provide a consistent way to manage component lifecycles and state.
- */
-import { ComponentType } from './system-channels';
-
-/**
- * Lifecycle state for components
+ * Lifecycle state enum
  */
 export enum LifecycleState {
-  /**
-   * Component is in the process of initializing
-   */
+  CREATED = 'created',
   INITIALIZING = 'initializing',
-  
-  /**
-   * Component is initialized but not yet connected
-   */
   INITIALIZED = 'initialized',
-  
-  /**
-   * Component is in the process of connecting
-   */
   CONNECTING = 'connecting',
-  
-  /**
-   * Component is successfully connected
-   */
   CONNECTED = 'connected',
-  
-  /**
-   * Component is in the process of disconnecting
-   */
   DISCONNECTING = 'disconnecting',
-  
-  /**
-   * Component is disconnected
-   */
   DISCONNECTED = 'disconnected',
-  
-  /**
-   * Component encountered an error
-   */
-  ERROR = 'error'
+  ERROR = 'error',
+  DESTROYED = 'destroyed'
 }
 
 /**
- * State of a connection
+ * Connection state interface
  */
 export interface ConnectionState {
   /**
-   * Current status of the connection
+   * Status of the connection
    */
-  status: LifecycleState;
+  status: LifecycleState | string;
   
   /**
-   * Timestamp when the state was updated (milliseconds since epoch)
+   * Timestamp of the state change
    */
   timestamp: number;
   
   /**
-   * Error that occurred, if any
+   * Type of component
+   */
+  componentType: string;
+  
+  /**
+   * ID of the component
+   */
+  componentId?: string;
+  
+  /**
+   * Error if status is 'error'
    */
   error?: Error;
-  
-  /**
-   * Component ID that this state belongs to
-   */
-  componentId: string;
-  
-  /**
-   * Component type (transport or connector)
-   */
-  componentType: ComponentType;
-  
-  /**
-   * Additional metadata about the state
-   */
-  metadata?: Record<string, unknown>;
 }
 
 /**
- * Component initialization options
+ * Initialization options
  */
 export interface InitOptions {
   /**
@@ -100,54 +61,41 @@ export interface InitOptions {
    * Whether to enable debug logging
    */
   debug?: boolean;
-  
-  /**
-   * Retry configuration
-   */
-  retry?: {
-    /**
-     * Maximum number of retry attempts
-     */
-    maxAttempts: number;
-    
-    /**
-     * Base delay between retries in milliseconds
-     */
-    baseDelay: number;
-    
-    /**
-     * Maximum delay between retries in milliseconds
-     */
-    maxDelay: number;
-    
-    /**
-     * Whether to use exponential backoff
-     */
-    exponential: boolean;
-  };
-  
-  /**
-   * Additional component-specific options
-   */
-  [key: string]: unknown;
 }
 
 /**
- * EventHub configuration
+ * Lifecycle management interface
  */
-export interface EventHubConfig {
+export interface LifecycleManager {
   /**
-   * Whether to enable debug logging
+   * Initialize the component
    */
-  debug?: boolean;
+  initialize(): Promise<void>;
   
   /**
-   * Whether to auto-connect components after initialization
+   * Start the component
    */
-  autoConnect?: boolean;
+  start(): Promise<void>;
   
   /**
-   * Additional configuration options
+   * Stop the component
    */
-  [key: string]: unknown;
+  stop(): Promise<void>;
+  
+  /**
+   * Destroy the component and clean up resources
+   */
+  destroy(): Promise<void>;
+  
+  /**
+   * Get the current state of the component
+   */
+  getState(): ConnectionState;
+  
+  /**
+   * Register a callback to be notified of state changes
+   * @param callback Function to call when state changes
+   * @returns Function to unregister the callback
+   */
+  onStateChange(callback: (state: ConnectionState) => void): () => void;
 }

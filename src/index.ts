@@ -1,31 +1,18 @@
-import { BaseFactory, FactoryRegistry } from './factory/base-factory';
-import { TransportFactory } from './factory/transport-factory';
-import { Channel } from './channel';
-import { EventHub } from './event-hub';
-import { IPipelineFilter, Pipeline, PipelineResult } from './pipeline';
-import { BaseTransport, ITransport, SinkTransport, SourceTransport } from './transport';
-import { ConnectionState,ConnectorConfig, EventCallback, EventHubConfig, Subscription, TransportConfig } from './types';
-
 /**
- * Core components for event handling and communication
+ * EventHub main exports
  */
-export { 
-    BaseFactory,
-    BaseTransport,
-    Channel,
-    ConnectionState,
-    ConnectorConfig,
-    EventCallback,
-    EventHub,
-    EventHubConfig,
-    FactoryRegistry,
-    IPipelineFilter,
-    ITransport,
-    Pipeline,
-    PipelineResult,
-    SinkTransport,
-    SourceTransport,
-    Subscription,
-    TransportConfig,
-    TransportFactory,
-};
+
+// Core components
+export { Channel } from './channel';
+export { EventHub } from './event-hub';
+
+// Factory components
+export { BaseFactory, FactoryRegistry } from './factory/base-factory';
+export { ConnectorFactory } from './factory/connector-factory';
+export { TransportFactory } from './factory/transport-factory';
+
+// Lifecycle components
+export { EventHubLifecycle } from './lifecycle/eventhub-lifecycle';
+
+// Type exports
+export * from './types';

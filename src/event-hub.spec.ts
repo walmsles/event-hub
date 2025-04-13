@@ -1,4 +1,7 @@
 import { EventHub } from './event-hub';
+// Original EventHub tests will be kept below
+// Additional tests for the factory pattern and configuration management will be added in a separate file
+// to maintain backward compatibility and keep the tests organized
 import {WildCardChannel } from './types';
 
 describe('[EventHub]: subscribe', () => {
