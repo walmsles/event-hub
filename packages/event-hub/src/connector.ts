@@ -22,19 +22,50 @@ import { Subscription } from './types';
  * that data to a specified channel in the EventHub.
  * 
  * @example
- * class WebSocketSourceConnector extends SourceConnector<string, object> {
- *   constructor(eventHub: EventHub) {
- *     super(
- *       eventHub,
- *       new WebSocketTransport("wss://api.example.com"),
- *       "websocket-events"
- *     );
+ * // Define the types for your connector
+ * interface ProcessedMessage {
+ *   messageId: string;
+ *   content: string;
+ *   sender: string;
+ *   timestamp: Date;
+ * }
+ * 
+ * // Create a WebSocket source transport (implementation details omitted)
+ * class WebSocketSource extends SourceTransport<string, ProcessedMessage> {
+ *   // Implementation details...
+ * }
+ * 
+ * // Create a connector that bridges the WebSocket source to the EventHub
+ * class ChatConnector extends SourceConnector<string, ProcessedMessage> {
+ *   constructor(eventHub: EventHub, url: string) {
+ *     // Create the transport
+ *     const transport = new WebSocketSource(url);
+ *     
+ *     // Initialize the connector with the transport and target channel
+ *     super(eventHub, transport, "chat-messages");
+ *   }
+ *   
+ *   // You can add custom methods specific to your connector
+ *   getConnectionStatus() {
+ *     return this.transport.isConnected() ? "Connected" : "Disconnected";
  *   }
  * }
  * 
- * const connector = new WebSocketSourceConnector(eventHub);
- * await connector.connect();
- * // Now websocket messages will be published to "websocket-events" channel
+ * // Usage in your application
+ * const eventHub = new EventHub();
+ * const chatConnector = new ChatConnector(eventHub, "wss://chat.example.com");
+ * 
+ * // Connect to start the flow of events from WebSocket to EventHub
+ * await chatConnector.connect();
+ * 
+ * // Now you can subscribe to the chat messages in your application
+ * eventHub.subscribe<ProcessedMessage>("chat-messages", (message) => {
+ *   // Display the message in your UI
+ *   displayChatMessage(message);
+ * });
+ * 
+ * // Later, disconnect when no longer needed
+ * await chatConnector.disconnect();
  */
 export abstract class SourceConnector<TInput, TOutput> {
     /** The EventHub instance where events will be published */
@@ -106,19 +137,58 @@ export abstract class SourceConnector<TInput, TOutput> {
  * sink transport that sends the data to an external system.
  * 
  * @example
- * class WebSocketSinkConnector extends SinkConnector<object, string> {
- *   constructor(eventHub: EventHub) {
- *     super(
- *       eventHub,
- *       new WebSocketTransport("wss://api.example.com"),
- *       "outbound-events"
- *     );
+ * // Define the types for your connector
+ * interface OutgoingMessage {
+ *   type: 'chat' | 'status';
+ *   content: string;
+ *   timestamp: number;
+ * }
+ * 
+ * // Create a WebSocket sink transport (implementation details omitted)
+ * class WebSocketSink extends SinkTransport<OutgoingMessage, string> {
+ *   // Implementation details...
+ * }
+ * 
+ * // Create a connector that bridges the EventHub to the WebSocket sink
+ * class ChatOutputConnector extends SinkConnector<OutgoingMessage, string> {
+ *   constructor(eventHub: EventHub, url: string) {
+ *     // Create the transport
+ *     const transport = new WebSocketSink(url);
+ *     
+ *     // Initialize the connector with the transport and source channel
+ *     super(eventHub, transport, "outgoing-messages");
+ *   }
+ *   
+ *   // You can add custom methods specific to your connector
+ *   sendSystemMessage(content: string) {
+ *     // Publish a system message to the EventHub channel
+ *     this.eventHub.publish<OutgoingMessage>("outgoing-messages", {
+ *       type: 'status',
+ *       content: content,
+ *       timestamp: Date.now()
+ *     });
  *   }
  * }
  * 
- * const connector = new WebSocketSinkConnector(eventHub);
- * await connector.connect();
- * // Now events published to "outbound-events" will be sent to the websocket
+ * // Usage in your application
+ * const eventHub = new EventHub();
+ * const chatOutput = new ChatOutputConnector(eventHub, "wss://chat.example.com");
+ * 
+ * // Connect to start the flow of events from EventHub to WebSocket
+ * await chatOutput.connect();
+ * 
+ * // Now you can publish messages to the EventHub and they'll be sent to the WebSocket
+ * eventHub.publish<OutgoingMessage>("outgoing-messages", {
+ *   type: 'chat',
+ *   content: 'Hello, everyone!',
+ *   timestamp: Date.now()
+ * });
+ * 
+ * // Or use the convenience method
+ * chatOutput.sendSystemMessage("User has joined the chat");
+ * 
+ * // Later, disconnect when no longer needed
+ * await chatOutput.disconnect();
  */
 export abstract class SinkConnector<TInput, TOutput> {
     /** The EventHub instance to subscribe to for events */
